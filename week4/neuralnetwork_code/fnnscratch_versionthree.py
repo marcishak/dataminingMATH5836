@@ -78,30 +78,39 @@ class Network:
 			self.W1 += ( v1 *self.momenRate) + (input_vec.T.dot(hid_delta) * self.learn_rate)   
 			self.B2+= ( b2 *self.momenRate) + (-1 * self.learn_rate * out_delta)       # velocity update
 			self.B1 += ( b1 *self.momenRate) + (-1 * self.learn_rate * hid_delta)   	
- 
-	def TestNetwork(self, Data,  erTolerance):
-		Input = np.zeros((1, self.Top[0])) # Temp hold input
+
+	def TestNetwork(self, Data, tolerance):
+		Input = np.zeros((1, self.Top[0])) # temp hold input
 		Desired = np.zeros((1, self.Top[2])) 
 		nOutput = np.zeros((1, self.Top[2]))
 		testSize = Data.shape[0]
+		
 		clasPerf = 0
 		sse = 0  
 		self.W1 = self.BestW1
-		self.W2 = self.BestW2 #Load best knowledge
+		self.W2 = self.BestW2 #load best knowledge
 		self.B1 = self.BestB1
-		self.B2 = self.BestB2 #Load best knowledge
+		self.B2 = self.BestB2 #load best knowledge
  
-		for s in range(0, testSize):			
-			Input[:]  =   Data[s,0:self.Top[0]] 
-			Desired[:] =  Data[s,self.Top[0]:] 
+		for s in range(0, testSize):
+							
+			Input  =   Data[s,0:self.Top[0]] 
+			Desired =  Data[s,self.Top[0]:] 
 
 			self.ForwardPass(Input ) 
 			sse = sse+ self.sampleEr(Desired)  
 
-			if(np.isclose(self.out, Desired, atol=erTolerance).any()):
-				clasPerf =  clasPerf +1  
 
-		return ( np.sqrt(sse/testSize), float(clasPerf)/testSize * 100 )
+			pred_binary = np.where(self.out > (1 - tolerance), 1, 0)
+			
+			if( (Desired==pred_binary).all()):
+				clasPerf =  clasPerf +1   
+
+			#if(np.isclose(self.out, Desired, atol=erTolerance).any()):
+				#clasPerf =  clasPerf +1  
+
+		return ( sse/testSize, float(clasPerf)/testSize * 100 )
+
 
 	def saveKnowledge(self):
 		self.BestW1 = self.W1
@@ -143,7 +152,7 @@ class Network:
 			if rmse < bestRMSE:
 				 bestRMSE = rmse
 				 self.saveKnowledge() 
-				 (bestRMSE,bestTrain) = self.TestNetwork(self.TrainData,   trainTolerance)
+				 (bestRMSE,bestTrain) = self.TestNetwork(self.TrainData,  trainTolerance)
 				 #Print(bestRMSE, bestTrain)
 
 			Er = np.append(Er, rmse)
@@ -230,7 +239,7 @@ def main():
  
 	useStocastic = True # False for vanilla BP with SGD (no shuffle of data).
 	#                     True for  BP with SGD (shuffle of data at every epoch)
-	updateStyle = False # True for Vanilla SGD, False for   momentum  SGD
+	updateStyle = True # True for Vanilla SGD, False for   momentum  SGD
 
 	momentum_rate = 0.001 # 0.1 ends up having very large weights. you can try and see
 	 
@@ -285,5 +294,4 @@ def main():
 			 
  
 if __name__ == "__main__": main()
-
 
