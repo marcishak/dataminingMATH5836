@@ -1,9 +1,7 @@
 # Rohitash Chandra, 2017 c.rohitash@gmail.conm
 
 #https://github.com/rohitash-chandra
- 
-
-# ref: http://iamtrask.github.io/2015/07/12/basic-python-network/  
+  
  
 
 #Sigmoid units used in hidden and output  
@@ -127,7 +125,7 @@ class Network:
 
 			
  
-	def TestNetwork(self, Data, testSize, erTolerance):
+	def TestNetwork(self, Data, testSize, tolerance):
 		Input = np.zeros((1, self.Top[0])) # temp hold input
 		Desired = np.zeros((1, self.Top[2])) 
 		nOutput = np.zeros((1, self.Top[2]))
@@ -146,8 +144,14 @@ class Network:
 			self.ForwardPass_Simple(Input ) 
 			sse = sse+ self.sampleEr(Desired)  
 
-			if(np.isclose(self.out, Desired, atol=erTolerance).any()):
-				clasPerf =  clasPerf +1  
+
+			pred_binary = np.where(self.out > (1 - tolerance), 1, 0)
+			
+			if( (Desired==pred_binary).all()):
+				clasPerf =  clasPerf +1   
+
+			#if(np.isclose(self.out, Desired, atol=erTolerance).any()):
+				#clasPerf =  clasPerf +1  
 
 		return ( sse/testSize, float(clasPerf)/testSize * 100 )
 
@@ -182,8 +186,9 @@ class Network:
 			 
 			mse = np.sqrt(sse/self.NumSamples*self.Top[2])
 
-			if mse < bestmse:
+			if mse < bestmse and epoch %10:
 				 bestmse = mse
+				 print(bestmse, epoch, ' bestmse, epoch')
 				 self.saveKnowledge() 
 				 (x,bestTrain) = self.TestNetwork(self.TrainData, self.NumSamples, 0.2)
 
@@ -204,7 +209,7 @@ def normalisedata(data, inputsize, outsize): # normalise the data between [0,1]
 def main(): 
 					
 		
-	problem = 2 # [1,2,3] choose your problem (Iris classfication or 4-bit parity or XOR gate)
+	problem = 1 # [1,2,3] choose your problem (Iris classfication or 4-bit parity or XOR gate)
 				
 
 	if problem == 1:
@@ -218,7 +223,7 @@ def main():
 		learnRate = 0.1  
 		TrainData  = normalisedata(TrDat, Input, Output) 
 		TestData  = normalisedata(TesDat, Input, Output)
-		MaxTime = 1000
+		MaxTime = 500
 
 
 		 
@@ -232,7 +237,7 @@ def main():
 		TrSamples =  TrainData.shape[0]
 		TestSize = TestData.shape[0]
 		learnRate = 0.9
-		MaxTime = 5000
+		MaxTime = 1000
 
 	elif problem == 3:
 		TrainData = np.loadtxt("data/xor.csv", delimiter=',') #  XOR  problem
@@ -244,10 +249,12 @@ def main():
 		TestSize = TestData.shape[0]
 		learnRate = 0.5
 		MaxTime = 500 
+
+	print(TrainData, ' TrainData')
  
 
 	Topo = [Input, Hidden, Output] 
-	MaxRun = 3 # number of experimental runs 
+	MaxRun = 2 # number of experimental runs 
 	 
 	MinCriteria = 95 #stop when learn 95 percent
 

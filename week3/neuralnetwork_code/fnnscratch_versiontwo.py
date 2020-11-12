@@ -90,7 +90,8 @@ class Network:
 
 			
  
-	def TestNetwork(self, Data, testSize, erTolerance):
+	
+	def TestNetwork(self, Data, testSize, tolerance):
 		Input = np.zeros((1, self.Top[0])) # temp hold input
 		Desired = np.zeros((1, self.Top[2])) 
 		nOutput = np.zeros((1, self.Top[2]))
@@ -103,14 +104,20 @@ class Network:
  
 		for s in range(0, testSize):
 							
-			Input[:]  =   Data[s,0:self.Top[0]] 
-			Desired[:] =  Data[s,self.Top[0]:] 
+			Input  =   Data[s,0:self.Top[0]] 
+			Desired =  Data[s,self.Top[0]:] 
 
 			self.ForwardPass(Input ) 
 			sse = sse+ self.sampleEr(Desired)  
 
-			if(np.isclose(self.out, Desired, atol=erTolerance).any()):
-				clasPerf =  clasPerf +1  
+
+			pred_binary = np.where(self.out > (1 - tolerance), 1, 0)
+			
+			if( (Desired==pred_binary).all()):
+				clasPerf =  clasPerf +1   
+
+			#if(np.isclose(self.out, Desired, atol=erTolerance).any()):
+				#clasPerf =  clasPerf +1  
 
 		return ( sse/testSize, float(clasPerf)/testSize * 100 )
 
@@ -149,6 +156,7 @@ class Network:
 
 			if mse < bestmse:
 				 bestmse = mse
+				 print(bestmse, epoch, ' bestmse epoch')
 				 self.saveKnowledge() 
 				 (x,bestTrain) = self.TestNetwork(self.TrainData, self.NumSamples, 0.2)
 
@@ -169,7 +177,7 @@ def normalisedata(data, inputsize, outsize): # normalise the data between [0,1]
 def main(): 
 					
 		
-	problem = 2 # [1,2,3] choose your problem (Iris classfication or 4-bit parity or XOR gate)
+	problem = 1 # [1,2,3] choose your problem (Iris classfication or 4-bit parity or XOR gate)
 				
 
 	if problem == 1:
@@ -183,7 +191,7 @@ def main():
 		learnRate = 0.1  
 		TrainData  = normalisedata(TrDat, Input, Output) 
 		TestData  = normalisedata(TesDat, Input, Output)
-		MaxTime = 1000
+		MaxTime = 500
 
 
 		 
@@ -197,7 +205,7 @@ def main():
 		TrSamples =  TrainData.shape[0]
 		TestSize = TestData.shape[0]
 		learnRate = 0.9 
-		MaxTime = 5000
+		MaxTime = 1000
 
 	elif problem == 3:
 		TrainData = np.loadtxt("data/xor.csv", delimiter=',') #  XOR  problem
